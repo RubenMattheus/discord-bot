@@ -3,7 +3,7 @@ from discord.ext.commands import Context, Bot
 from datetime import datetime
 import random
 from src.db import Repository
-from ..admin import check_for_admin
+from src.cmds import check_for_admin
 
 class Countdown(commands.Cog):
     def __init__(self, bot: Bot):

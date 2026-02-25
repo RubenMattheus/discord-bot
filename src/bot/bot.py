@@ -6,10 +6,10 @@ import os
 from dotenv import load_dotenv
 import yaml
 # default
-from src.cmds import Commands, Admin
+from src.commands import Commands, Admin
 from .events import Events
 # modules
-from src.cmds.modules import Casino, Countdown, Music, Todo
+from src.modules import Casino, Countdown, Music, Todo
 
 # Load config
 with open("config/config.yaml", "r") as f:
