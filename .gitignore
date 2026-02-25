@@ -1,5 +1,6 @@
-/venv
-
 .env
 database.db
-log.txt
+*.mp3
+
+/venv
+**/__pycache__/**

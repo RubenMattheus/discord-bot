@@ -1,0 +1,30 @@
+theme:
+  active: "default"
+
+modules:
+  casino: true
+  countdown: true
+  music: true
+  todo: true
+
+themes:
+  default:
+    prefix: "b!"
+    status: "Use b!help for commands"
+    countdown: [""]
+    countdown_finished: "Countdown finished"
+
+  glider:
+    prefix: "g!"
+    status: "Use g!help for commands"
+
+  usagi:
+    prefix: "u!"
+    status: "Eating probably..."
+    countdown: [
+      "iyaa!",
+      "iya-ha!",
+      "haa?!",
+      "ura!"
+    ]
+    countdown_finished: "IYA-HA!"

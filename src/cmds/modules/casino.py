@@ -5,22 +5,13 @@ from discord.ext.commands import Context, Bot
 import random
 import asyncio
 
-class JokeCommands(commands.Cog):
+class Casino(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.command()
-    async def jokehelp(self, ctx: Context):
-        text = "\t"
-
-        for command in self.bot.commands:
-            if command.cog_name != "JokeCommands" or "help" in command.name:
-                continue
-            text += f"\n- {command}"
-
-        embed = discord.Embed(title='Joke commands', description=text, color=discord.Color.from_rgb(40, 11, 15))
-        await ctx.send(embed=embed)
-
+    """
+    Send the result of x simulated dice rolls (1 <= x <= 5)
+    """
     @commands.command()
     async def dice(self, ctx: Context, amount = "1"):
         total = 0
@@ -29,7 +20,6 @@ class JokeCommands(commands.Cog):
             amount = int(amount)
         except ValueError:
             amount = 1
-
         if amount < 1 or amount > 5:
             await ctx.send("Give a valid amount of dice (1-5)")
             return
@@ -43,19 +33,15 @@ class JokeCommands(commands.Cog):
         await asyncio.sleep(0.5)
         await ctx.send(f"total is {total}")
 
+    """
+    Allow two users to play rock paper scissors together by sending them a dm with the option and announcing the winner 
+    """
     @commands.command()
     async def rps(self, ctx: Context, member: Member = ""):
-        if member == "":
-            await ctx.send("Go look for friends to play with")
-            return
-        elif member == self.bot.user:
-            await ctx.send("Go look for REAL friends to play with")
-            return
-        elif ctx.author == member:
-            await ctx.send("Why u trying to play with yourself :face_with_raised_eyebrow:")
-            return
-
-        async def send_option(target: Member):
+        """
+        Helper function to send the rps options to a user
+        """
+        async def send_option(self, target: Member):
             embed = discord.Embed(title='choose one', color=discord.Color.from_rgb(40, 11, 15))
             dm = await target.send(embed=embed)
             emoji_dict = {
@@ -66,15 +52,27 @@ class JokeCommands(commands.Cog):
 
             for emoji in emoji_dict.values():
                 await dm.add_reaction(emoji)
-    
+
             try:
-                reaction, _ = await self.bot.wait_for("reaction_add",
-                                                      check=lambda r, u: u == target and str(r.emoji) in emoji_dict.values(),
-                                                      timeout=60.0)
+                reaction, _ = await self.bot.wait_for(
+                    "reaction_add",
+                    check=lambda r, u: u == target and str(r.emoji) in emoji_dict.values(),
+                    timeout=60.0
+                )
                 return next(option for option, emoji in emoji_dict.items() if emoji == str(reaction.emoji))
 
             except asyncio.TimeoutError:
                 return None
+
+        if member == "":
+            await ctx.send("Mention someone you'd like to play with")
+            return
+        elif member == self.bot.user:
+            await ctx.send("Discord bots don't like playing rock paper scissors")
+            return
+        elif ctx.author == member:
+            await ctx.send("Mention someone you'd like to play with (that's not you!)")
+            return
 
         author_choice = await send_option(ctx.author)
         member_choice = await send_option(member)
@@ -94,9 +92,14 @@ class JokeCommands(commands.Cog):
 
         return
 
+    """
+    Play blackjack
+    """
     @commands.command()
     async def blackjack(self, ctx: Context):
-
+        """
+        Calculate the total value of a hand in blackjack
+        """
         def blackjacktotal(cards: list):
             total = 0
             for card in cards:
@@ -106,17 +109,20 @@ class JokeCommands(commands.Cog):
                     total += 10
                 else:
                     total += int(card)
-                if total <= 11 and "A" in cards:
-                    total += 10
+            if total <= 11 and "A" in cards:
+                total += 10
             return total
-
+        
+        """
+        Add the value of a random card to a list
+        """
         def add_card(cards: list):
             options = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
             draw = random.randint(0, 12)
             card = options[draw]
             cards.append(card)
-            return card
-    
+            return card   
+           
         hand = []
         dealer_hand = []
 
@@ -139,18 +145,18 @@ class JokeCommands(commands.Cog):
             for i in emoji:
                 await choice.add_reaction(i)
 
+            """
+            Return the user id and the added reaction
+            """
             def check(reaction, reactor):
                 return reactor.id == ctx.author.id and reaction.emoji in emoji
 
             try:
                 reaction, member = await self.bot.wait_for("reaction_add", check=check, timeout=60.0)
-
                 if reaction.emoji == "🇭":
                     await ctx.send(f"You draw a {add_card(hand)}, making your total {blackjacktotal(hand)}")
-
                 if reaction.emoji == "🇶":
                     break
-
             except asyncio.TimeoutError:
                 await ctx.send(f"{ctx.author.mention}: blackjack timed out")
                 return
@@ -163,7 +169,6 @@ class JokeCommands(commands.Cog):
 
         while blackjacktotal(dealer_hand) < 17:
             await ctx.send(f"Dealer draws a {add_card(dealer_hand)}, making their total {blackjacktotal(dealer_hand)}")
-
             if blackjacktotal(dealer_hand) > 21:
                 await ctx.send("Dealer busts! You win!")
                 return
@@ -174,9 +179,7 @@ class JokeCommands(commands.Cog):
             await ctx.send(f"Your total is {blackjacktotal(hand)}, dealers total is {blackjacktotal(dealer_hand)}, you lose...")
         else:
             await ctx.send(f"Your total is {blackjacktotal(hand)}, dealers total is {blackjacktotal(dealer_hand)}, you draw")
-            
         return
 
-
 def setup(bot: Bot):
-    bot.add_cog(JokeCommands(bot))
+    bot.add_cog(Casino(bot))
