@@ -5,7 +5,7 @@ from discord.ext.commands import Bot, Context
 from yt_dlp import YoutubeDL
 import asyncio
 from src.db import Repository
-from src.cmds import check_for_admin
+from src.commands import check_for_admin
 
 class Music(commands.Cog):
     def __init__(self, bot: Bot):
