@@ -41,7 +41,7 @@ class Casino(commands.Cog):
         """
         Helper function to send the rps options to a user
         """
-        async def send_option(self, target: Member):
+        async def send_option(target: Member):
             embed = discord.Embed(title='choose one', color=discord.Color.from_rgb(40, 11, 15))
             dm = await target.send(embed=embed)
             emoji_dict = {
