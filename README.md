@@ -14,15 +14,13 @@ A discord bot, configurable to have fitting modules for the use case.
 
 - [./config/](./config/) contains the configuration file
 
-- [./src/](./src/) contains the bot logic
-
 - [./src/bot/](./src/bot/) contains generic discord bot setup
 
-- [./src/cmds/](./src/cmds/) contains generic discord bot commands
-
-- [./src/cmds/modules/](./src/cmds/modules/) contains more specific commands and functionalities, every module can be toggled on or off in ./config
+- [./src/commands/](./src/commands/) contains generic discord bot commands
 
 - [./src/db/](./src/db/) contains database logic
+
+- [./src/modules/](./src/modules/) contains more specific commands and functionalities, every module can be toggled on or off in ./config
 
 ## Setup/installation
 
