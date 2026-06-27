@@ -1,32 +1,32 @@
-import discord
-from discord.ext import commands
-from discord.ext.commands import Context, Bot
 import os
 import random
 import asyncio
 from datetime import datetime
+import discord
+from discord.ext import commands
+from discord.ext.commands import Context, Bot
 from src.db import Repository
 
 class Commands(commands.Cog):
+    """ Commands class for regular commands """
     def __init__(self, bot: Bot):
         self.bot = bot
         self.repo = Repository()
-    
-    """
-    Print errors to console
-    """
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error):
-        print(f"<{datetime.now()}> user: {ctx.message.author}; command: {ctx.message.content}; error: {error}")
+        """ Print errors to console """
+        print(
+            f"<{datetime.now()}> user: {ctx.message.author}; command: {ctx.message.content}; error: {error}"
+        )
 
-    """
-    List commands
-    """
+
     @commands.command()
     async def help(self, ctx: Context):
+        """ List commands """
         cogs = self.bot.cogs
         text = "\t"
-        
+
         for c in cogs:
             cog = self.bot.get_cog(c)
             commands = cog.get_commands()
@@ -38,14 +38,16 @@ class Commands(commands.Cog):
                     continue
                 text += f"\n- {command}"
 
-        embed = discord.Embed(title='', description=f'{text}', color=discord.Color.from_rgb(40, 11, 15))
+        embed = discord.Embed(
+            title='',
+            description=f'{text}',
+            color=discord.Color.from_rgb(40, 11, 15)
+        )
         await ctx.send(embed=embed)
 
-    """
-    Play a random .mp3 file from ./audio_files
-    """
     @commands.command()
     async def audio(self, ctx):
+        """ Play a random .mp3 file from ./audio_files """
         voice_channel = ctx.author.voice.channel
         vc = await voice_channel.connect()
 
@@ -78,4 +80,5 @@ class Commands(commands.Cog):
             await asyncio.sleep(10)
 
 def setup(bot):
+    """ Add cog to the Discord bot """
     bot.add_cog(Commands(bot))

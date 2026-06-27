@@ -1,29 +1,28 @@
+import asyncio
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
-import asyncio
 
-"""
-Check if the author of the passed context has admin permissions in the server
-"""
 async def check_for_admin(ctx: Context):
+    """ Check if the author of the passed context has admin permissions in the server """
     if ctx.author.guild_permissions.administrator:
         return True
     else:
-        await ctx.message.channel.send(f"{ctx.message.author.mention} : you need admin permissions for this command")
+        await ctx.message.channel.send(
+            f"{ctx.message.author.mention} : you need admin permissions for this command"
+        )
         return False
 
 class Admin(commands.Cog):
+    """ Admin class for commands that require admin on the Discord server """
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    """
-    Mute everyone in the current voice channel after a certain amount of time
-    """
     @commands.command()
     async def mutevc(self, ctx: Context, time = "1h"):
+        """ Mute everyone in the current voice channel after a certain amount of time """
         if not await check_for_admin(ctx):
             return
-        
+
         ms_dict = {
             "m" : 60,
             "h" : 3600
@@ -35,7 +34,7 @@ class Admin(commands.Cog):
             if not char.isnumeric() and char not in ms_dict:
                 ctx.send("Invalid time format (valid format example: 1h30)")
                 return
-            
+
             if char.isnumeric():
                 current_number += char
 
@@ -47,8 +46,8 @@ class Admin(commands.Cog):
             vc = author.voice.channel
         except AttributeError:
             await author.send("Please join a vc before using u!mutevc <time>")
-            return      
-        
+            return
+
         await ctx.send(f"Muting everyone in {vc.mention} in {time}")
 
         await asyncio.sleep(wait_time)
@@ -58,4 +57,5 @@ class Admin(commands.Cog):
             await user.edit(mute=True)
 
 def setup(bot):
+    """ Add cog to the Discord bot """
     bot.add_cog(Admin(bot))

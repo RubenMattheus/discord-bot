@@ -1,6 +1,7 @@
 import sqlite3
 
 class Connection:
+    """ Connection class to reference sqlite3 database """
     _instance = None
 
     def __init__(self, db_path='database.db'):
@@ -12,20 +13,25 @@ class Connection:
 
     @classmethod
     def get_connection(cls, db_path='database.db'):
+        """ Returns the connection class (if it doesn't exist yet, creates one) """
         if cls._instance is None:
             cls._instance = cls(db_path)
         return cls._instance
-    
+
     def get_db(self):
+        """ Returns the database instance """
         return self.mydb
-    
+
     def get_cursor(self):
+        """ Returns the database cursor """
         return self.mydb.cursor()
-    
+
     def commit(self):
+        """ Commits to the database """
         self.mydb.commit()
-    
+
     def close_connection(self):
+        """ Close connection to database """
         if self.mydb:
             self.mydb.close()
             Connection._instance = None

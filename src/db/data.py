@@ -1,6 +1,7 @@
 from .connection import Connection
 
 class Data:
+    """ Data class that acts as layer between connection and repository """
     def __init__(self):
         self.conn = Connection.get_connection()
         self.cursor = self.conn.get_cursor()
@@ -20,13 +21,12 @@ class Data:
         finally:
             cursor.close()
 
-    """
-    Countdown
-    """
+    # Countdown
+
     def insert_countdown(self, serverid, channelid, day, month, year):
         query = "INSERT OR REPLACE INTO countdown (serverID, channelID, day, month, year) VALUES (?, ?, ?, ?, ?)"
         self._execute_query(query, (serverid, channelid, day, month, year))
-    
+
     def delete_countdown(self, serverid):
         query = "DELETE FROM countdown WHERE serverID = ?;"
         self._execute_query(query, (serverid,))
@@ -35,9 +35,8 @@ class Data:
         query = "SELECT * FROM countdown;"
         return self._execute_query(query)
 
-    """
-    Music
-    """
+    # Music
+
     def insert_musicqueue(self, serverid, channel_id, message_id):
         query = "INSERT OR REPLACE INTO music (serverID, channelID, messageID) VALUES (?, ?, ?)"
         self._execute_query(query, (serverid, channel_id, message_id))
@@ -45,18 +44,17 @@ class Data:
     def select_server_ids_music(self):
         query = "SELECT serverID FROM music;"
         return self._execute_query(query)
-    
+
     def select_musicchannel(self, serverid):
         query = "SELECT channelID FROM music WHERE serverID = ?;"
         return self._execute_query(query, (serverid,), True)
-    
+
     def select_queuemessage(self, serverid):
         query = "SELECT messageID FROM music WHERE serverID = ?;"
         return self._execute_query(query, (serverid,), True)
 
-    """
-    Todo list
-    """
+    # Todo list
+
     def insert_todo(self, server_id, todo):
         query = "INSERT OR REPLACE INTO todo (serverID, todo) VALUES (?, ?)"
         self._execute_query(query, (server_id, todo))

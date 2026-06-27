@@ -1,9 +1,9 @@
 from .connection import Connection
 
-conn = Connection.get_connection()
-cursor = conn.get_cursor()
+CONN = Connection.get_connection()
+CURSOR = CONN.get_cursor()
 
-countdown_query = """
+COUNTDOWN_QUERY = """
 CREATE TABLE IF NOT EXISTS countdown (
     serverID INTEGER PRIMARY KEY,
     channelID INTEGER,
@@ -12,23 +12,23 @@ CREATE TABLE IF NOT EXISTS countdown (
     year INTEGER
 )"""
 
-music_query = """
+MUSIC_QUERY = """
 CREATE TABLE IF NOT EXISTS music (
     serverID INTEGER PRIMARY KEY,
     channelID INTEGER,
     messageID INTEGER
 )"""
 
-todo_query = """
+TODO_QUERY = """
 CREATE TABLE IF NOT EXISTS todo (
     serverID INTEGER PRIMARY KEY,
     todo TEXT
 )"""
 
-queries = [countdown_query, music_query, todo_query]
+queries = [COUNTDOWN_QUERY, MUSIC_QUERY, TODO_QUERY]
 
 for query in queries:
-    cursor.execute(query)
-    conn.commit
+    CURSOR.execute(query)
+    CONN.commit()
 
-cursor.close()
+CURSOR.close()
