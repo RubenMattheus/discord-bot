@@ -1,7 +1,6 @@
 from .data import Data
 
 class Repository:
-    """ Repository class that acts as  """
     def __init__(self):
         self.data = Data()
 
@@ -19,19 +18,19 @@ class Repository:
 
     # Music
 
-    def add_musicqueue(self, id: int, channel_id: int, message_id: int):
-        self.data.insert_musicqueue(id, channel_id, message_id)
+    def add_musicqueue(self, server_id: int, channel_id: int, message_id: int):
+        self.data.insert_musicqueue(server_id, channel_id, message_id)
 
     def get_server_ids_music(self):
         result = self.data.select_server_ids_music()
         return result if result is not None else None
 
-    def get_musicchannel(self, id: int):
-        result = self.data.select_musicchannel(id)
+    def get_musicchannel(self, server_id: int):
+        result = self.data.select_musicchannel(server_id)
         return result['channelID'] if result is not None else None
 
-    def get_queuemessage(self, id: int):
-        result = self.data.select_queuemessage(id)
+    def get_queuemessage(self, server_id: int):
+        result = self.data.select_queuemessage(server_id)
         return result['messageID'] if result is not None else None
 
     # Todo list

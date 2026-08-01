@@ -3,16 +3,15 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
 from src.db import Repository
+from src.constants import EMBED_COLOR
 
 class Todo(commands.Cog):
-    """ Todo class for todo list functionality """
     def __init__(self, bot: Bot):
         self.bot = bot
         self.repo = Repository()
 
     @commands.command()
     async def todo(self, ctx: Context):
-        """ Generate embed for the todo list and send it """
         server_id = ctx.guild.id
 
         todo = self.repo.get_todo(server_id)
@@ -29,13 +28,12 @@ class Todo(commands.Cog):
         embed = discord.Embed(
             title='TODO',
             description=f'{text}',
-            color=discord.Color.from_rgb(40, 11, 15)
+            color=EMBED_COLOR
         )
         await ctx.send(embed=embed)
 
     @commands.command()
     async def add(self, ctx: Context, task: str, count: int):
-        """ Add element to todo list """
         server_id = ctx.guild.id
 
         todo = self.repo.get_todo(server_id)
@@ -70,7 +68,3 @@ class Todo(commands.Cog):
             await self.todo(ctx)
         else:
             await ctx.send("Todo list finished!")
-
-def setup(bot):
-    """ Add cog to the Discord bot """
-    bot.add_cog(Todo(bot))

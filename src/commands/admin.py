@@ -13,13 +13,11 @@ async def check_for_admin(ctx: Context):
         return False
 
 class Admin(commands.Cog):
-    """ Admin class for commands that require admin on the Discord server """
     def __init__(self, bot: Bot):
         self.bot = bot
 
     @commands.command()
     async def mutevc(self, ctx: Context, time = "1h"):
-        """ Mute everyone in the current voice channel after a certain amount of time """
         if not await check_for_admin(ctx):
             return
 
@@ -45,7 +43,7 @@ class Admin(commands.Cog):
         try:
             vc = author.voice.channel
         except AttributeError:
-            await author.send("Please join a vc before using u!mutevc <time>")
+            await ctx.send("Please join a vc before using u!mutevc <time>")
             return
 
         await ctx.send(f"Muting everyone in {vc.mention} in {time}")
@@ -55,7 +53,3 @@ class Admin(commands.Cog):
         users = vc.members
         for user in users:
             await user.edit(mute=True)
-
-def setup(bot):
-    """ Add cog to the Discord bot """
-    bot.add_cog(Admin(bot))

@@ -1,2 +1,2 @@
-from .commands import *
-from .admin import *
+from .commands import Commands
+from .admin import Admin, check_for_admin

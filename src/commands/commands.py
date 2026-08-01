@@ -1,39 +1,37 @@
 import os
 import random
 import asyncio
-from datetime import datetime
+import logging
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
-from src.db import Repository
+from src.constants import EMBED_COLOR
+
+logger = logging.getLogger(__name__)
 
 class Commands(commands.Cog):
-    """ Commands class for regular commands """
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.repo = Repository()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error):
-        """ Print errors to console """
-        print(
-            f"<{datetime.now()}> user: {ctx.message.author}; command: {ctx.message.content}; error: {error}"
+        logger.error(
+            "user: %s; command: %s; error: %s", ctx.message.author, ctx.message.content, error
         )
 
 
     @commands.command()
     async def help(self, ctx: Context):
-        """ List commands """
         cogs = self.bot.cogs
         text = "\t"
 
         for c in cogs:
             cog = self.bot.get_cog(c)
-            commands = cog.get_commands()
-            if len(commands) == 0:
+            cog_commands = cog.get_commands()
+            if len(cog_commands) == 0:
                 continue
             text += f"\n**{c}**"
-            for command in commands:
+            for command in cog_commands:
                 if "help" in command.name:
                     continue
                 text += f"\n- {command}"
@@ -41,14 +39,19 @@ class Commands(commands.Cog):
         embed = discord.Embed(
             title='',
             description=f'{text}',
-            color=discord.Color.from_rgb(40, 11, 15)
+            color=EMBED_COLOR
         )
         await ctx.send(embed=embed)
 
     @commands.command()
     async def audio(self, ctx):
         """ Play a random .mp3 file from ./audio_files """
-        voice_channel = ctx.author.voice.channel
+        try:
+            voice_channel = ctx.author.voice.channel
+        except AttributeError:
+            await ctx.send("Please join a vc before using audio")
+            return
+
         vc = await voice_channel.connect()
 
         folder = os.path.abspath("audio_files")
@@ -76,9 +79,7 @@ class Commands(commands.Cog):
 
         vc.play(source)
 
-        while True:
+        while vc.is_playing() or vc.is_paused():
             await asyncio.sleep(10)
 
-def setup(bot):
-    """ Add cog to the Discord bot """
-    bot.add_cog(Commands(bot))
+        await vc.disconnect()

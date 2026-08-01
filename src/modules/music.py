@@ -1,14 +1,24 @@
 import asyncio
+import logging
+from dataclasses import dataclass, field
+from typing import Optional
 import discord
-from discord import Message, RawReactionActionEvent
+from discord import Message, RawReactionActionEvent, VoiceClient
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from yt_dlp import YoutubeDL
 from src.db import Repository
 from src.commands import check_for_admin
 
+logger = logging.getLogger(__name__)
+
+@dataclass
+class ServerMusicState:
+    voice_channel: Optional[VoiceClient] = None
+    music_queue: list = field(default_factory=list)
+    is_playing: bool = False
+
 class Music(commands.Cog):
-    """ Music class for music functionality in a vc """
     def __init__(self, bot: Bot):
         self.bot = bot
         self.repo = Repository()
@@ -19,10 +29,8 @@ class Music(commands.Cog):
             "▶️": self.resume_command,
             "⏩": self.skip_command
         }
-        self.is_playing = {}
-        self.voice_channel = {}
-        self.music_queue = {}
-        self.fill_dictionaries()
+        self.state = {}
+        self.fill_state()
 
         self.YDL_OPTIONS = {
             'format': 'bestaudio',
@@ -41,11 +49,6 @@ class Music(commands.Cog):
 
     @commands.command()
     async def musicsetup(self, ctx: Context):
-        """ 
-        - create a queuemessage,
-        - add the emoji
-        - save the IDs in the db and update the dictionary 
-        """
         if not await check_for_admin(ctx):
             return
 
@@ -65,9 +68,7 @@ class Music(commands.Cog):
         server_id, channel_id = ctx.guild.id, ctx.message.channel.id
         self.repo.add_musicqueue(server_id, channel_id, queue_message.id)
 
-        self.is_playing[server_id] = False
-        self.voice_channel[server_id] = ""
-        self.music_queue[server_id] = []
+        self.state[server_id] = ServerMusicState()
 
     @commands.command()
     async def music(self, ctx: Context):
@@ -116,61 +117,60 @@ class Music(commands.Cog):
             return
 
 
-    def fill_dictionaries(self):
-        """ Create dictionary key - value pairs for every server """
+    def fill_state(self):
+        """ Create a state entry for every server that has music set up """
         servers = self.repo.get_server_ids_music()
         if not servers:
             return
         for server_id in servers:
             server_id = server_id[0]
-            self.is_playing[server_id] = False
-            self.voice_channel[server_id] = ""
-            self.music_queue[server_id] = []
+            self.state[server_id] = ServerMusicState()
 
     # Manage vc, queue and playing state when adding/removing emoji on the queue message
 
     def stop_command(self, server_id):
-        self.voice_channel[server_id].stop()
-        self.music_queue[server_id].clear()
-        self.is_playing[server_id] = False
+        state = self.state[server_id]
+        state.voice_channel.stop()
+        state.music_queue.clear()
+        state.is_playing = False
 
     def pause_command(self, server_id):
-        self.voice_channel[server_id].pause()
+        self.state[server_id].voice_channel.pause()
 
     def resume_command(self, server_id):
-        self.voice_channel[server_id].resume()
+        self.state[server_id].voice_channel.resume()
 
     def skip_command(self, server_id):
-        self.voice_channel[server_id].stop()
+        self.state[server_id].voice_channel.stop()
 
     async def update_queue(self, server_id):
         """ Update the content of the queue message to reflect the current queue """
+        state = self.state[server_id]
         server = self.bot.get_guild(server_id)
         music_channel = await server.fetch_channel(self.repo.get_musicchannel(server_id))
         queue_message = await music_channel.fetch_message(self.repo.get_queuemessage(server_id))
 
-        if len(self.music_queue[server_id]) == 0:
+        if len(state.music_queue) == 0:
             song_lijst = "*enter song title to start playing music*"
         else:
-            song_lijst = f"*currently playing:*\n**{self.music_queue[server_id][0]['title']}**\n"
+            song_lijst = f"*currently playing:*\n**{state.music_queue[0]['title']}**\n"
 
-        if len(self.music_queue[server_id]) > 1:
+        if len(state.music_queue) > 1:
             song_lijst += "\t\n*queue:*"
 
-        if len(self.music_queue[server_id]) <= 11:
-            for i in range(1, len(self.music_queue[server_id])):
-                song_lijst += f"\n{i}. **{self.music_queue[server_id][i]['title']}**"
-        elif len(self.music_queue[server_id]) > 11:
+        if len(state.music_queue) <= 11:
+            for i in range(1, len(state.music_queue)):
+                song_lijst += f"\n{i}. **{state.music_queue[i]['title']}**"
+        elif len(state.music_queue) > 11:
             for i in range(1, 11):
-                song_lijst += f"\n{i}. {self.music_queue[server_id][i]}"
+                song_lijst += f"\n{i}. {state.music_queue[i]}"
 
-            song_lijst += f"\n*and **{len(self.music_queue[server_id]) - 11}** more*"
+            song_lijst += f"\n*and **{len(state.music_queue) - 11}** more*"
 
         queue_embed = discord.Embed(title="**QUEUE**", description=song_lijst)
         await queue_message.edit(embed=queue_embed)
 
     async def process_message(self, message: Message, server_id):
-        """ Process the content of a message """
         content = message.content
         author = message.author
 
@@ -180,12 +180,14 @@ class Music(commands.Cog):
         await asyncio.sleep(1)
         await message.delete()
 
-        if self.bot.theme.get("prefix", self.bot.config.get("themes")["default"]["prefix"]) in content:
+        if self.bot.get_theme_value("prefix") in content:
             return
 
         try:
             author_vc = message.author.voice.channel
         except AttributeError:
+            # DMed instead of posted here: this channel auto-deletes every message,
+            # so an in-channel error would just vanish too.
             await author.send("Please join a vc before queueing songs")
             return
 
@@ -197,10 +199,11 @@ class Music(commands.Cog):
             await author.send("Error with song: duration over 10 minutes")
             return
 
-        self.music_queue[server_id].append(song)
+        state = self.state[server_id]
+        state.music_queue.append(song)
 
-        if not self.is_playing[server_id]:
-            self.voice_channel[server_id] = await author_vc.connect()
+        if not state.is_playing:
+            state.voice_channel = await author_vc.connect()
             await self.play_music(message)
 
         await self.update_queue(server_id)
@@ -223,9 +226,8 @@ class Music(commands.Cog):
             return
 
         if emoji == '⏹️':
-            await self.voice_channel[server_id].disconnect()
+            await self.state[server_id].voice_channel.disconnect()
             await self.update_queue(server_id)
-        return
 
     def search_song(self, message):
         """ Extract the info of the top result of a youtube or soundcloud search """
@@ -235,36 +237,32 @@ class Music(commands.Cog):
                 try:
                     info = ydl.extract_info(message, download=False)
                 except Exception as e:
-                    print(e)
+                    logger.error("Error extracting song info for %s: %s", message, e)
                     return False
             else:
                 try:
                     info = ydl.extract_info(f"ytsearch:{message}", download=False)['entries'][0]
                 except Exception as e:
-                    print(e)
+                    logger.error("Error searching for song %s: %s", message, e)
                     return False
             return {'source': info['url'], 'title': info['title'], 'duration': info['duration']}
 
     async def play_music(self, ctx: Context):
-        """ Play audio in a vc """
         server_id = ctx.guild.id
-        self.is_playing[server_id] = True
+        state = self.state[server_id]
+        state.is_playing = True
 
-        while len(self.music_queue.get(server_id)) > 0:
+        while len(state.music_queue) > 0:
             await self.update_queue(server_id)
-            url = self.music_queue[server_id][0]['source']
+            url = state.music_queue[0]['source']
             audio_source = discord.FFmpegPCMAudio(url, **self.FFMPEG_OPTIONS)
-            self.voice_channel[server_id].play(discord.PCMVolumeTransformer(audio_source, volume=0.05))
+            state.voice_channel.play(discord.PCMVolumeTransformer(audio_source, volume=0.05))
 
-            while self.voice_channel[server_id].is_playing() or self.voice_channel[server_id].is_paused():
+            while state.voice_channel.is_playing() or state.voice_channel.is_paused():
                 await asyncio.sleep(1)
 
-            if self.is_playing[server_id]:
-                self.music_queue[server_id].pop(0)
+            if state.is_playing:
+                state.music_queue.pop(0)
 
-        await self.voice_channel[server_id].disconnect()
-        self.is_playing[server_id] = False
-
-def setup(bot):
-    """ Add cog to the Discord bot """
-    bot.add_cog(Music(bot))
+        await state.voice_channel.disconnect()
+        state.is_playing = False

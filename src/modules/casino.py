@@ -4,9 +4,9 @@ import discord
 from discord import Member
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
+from src.constants import EMBED_COLOR
 
 class Casino(commands.Cog):
-    """ Casino class for gambling minigames """
     def __init__(self, bot: Bot):
         self.bot = bot
 
@@ -34,13 +34,11 @@ class Casino(commands.Cog):
 
     @commands.command()
     async def rps(self, ctx: Context, member: Member = ""):
-        """ Starts a Rock Paper Scissors game between two users """
         async def send_option(target: Member):
-            """ Helper function to send the rps options to a user """
-            embed = discord.Embed(title='choose one', color=discord.Color.from_rgb(40, 11, 15))
+            embed = discord.Embed(title='choose one', color=EMBED_COLOR)
             dm = await target.send(embed=embed)
             emoji_dict = {
-                "rock": "🗿", 
+                "rock": "🗿",
                 "paper": "📄",
                 "scissors": "✂"
             }
@@ -96,13 +94,9 @@ class Casino(commands.Cog):
                 f"{member.mention} ({member_choice}) won against {ctx.author.mention} ({author_choice})"
                 )
 
-        return
-
     @commands.command()
     async def blackjack(self, ctx: Context):
-        """ Starts a Blackjack game """
         def blackjacktotal(cards: list):
-            """ Calculate the total value of a hand in blackjack """
             total = 0
             for card in cards:
                 if card == "A":
@@ -116,7 +110,6 @@ class Casino(commands.Cog):
             return total
 
         def add_card(cards: list):
-            """ Add the value of a random card to a list """
             options = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
             draw = random.randint(0, 12)
             card = options[draw]
@@ -142,7 +135,7 @@ class Casino(commands.Cog):
             return
 
         while blackjacktotal(hand) < 21:
-            embed = discord.Embed(title='HIT or QUIT', color=discord.Color.from_rgb(40, 11, 15))
+            embed = discord.Embed(title='HIT or QUIT', color=EMBED_COLOR)
             choice = await ctx.send(embed=embed)
             emoji = ["🇭", "🇶"]
 
@@ -150,7 +143,6 @@ class Casino(commands.Cog):
                 await choice.add_reaction(i)
 
             def check(reaction, reactor):
-                """ Return the user id and the added reaction """
                 return reactor.id == ctx.author.id and reaction.emoji in emoji
 
             try:
@@ -193,8 +185,3 @@ class Casino(commands.Cog):
             await ctx.send(
                 f"Your total is {blackjacktotal(hand)}, dealers total is {blackjacktotal(dealer_hand)}, you draw"
             )
-        return
-
-def setup(bot: Bot):
-    """ Add cog to the Discord bot """
-    bot.add_cog(Casino(bot))

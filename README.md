@@ -2,7 +2,7 @@
 
 ## Overview
 
-A discord bot, configurable to have fitting modules for the use case.
+A general-purpose Discord bot built from independent, toggleable modules: casino games, a countdown, music playback, and a todo list. Each deployment only runs what it needs.
 
 ## Prerequisites
 
@@ -11,28 +11,21 @@ A discord bot, configurable to have fitting modules for the use case.
 ## Architecture
 
 - [./audio_files/](./audio_files/) contains .mp3 files that can be played in a voice channel
-
 - [./config/](./config/) contains the configuration file
-
 - [./src/bot/](./src/bot/) contains generic discord bot setup
-
 - [./src/commands/](./src/commands/) contains generic discord bot commands
-
 - [./src/db/](./src/db/) contains database logic
-
 - [./src/modules/](./src/modules/) contains more specific commands and functionalities, every module can be toggled on or off in ./config
 
 ## Setup/installation
 
 First create a .env file structured as follows:
 
-```
+```txt
 TOKEN=<bot-token>
 ```
 
-Then run the following command to set up the database:
-
-> python -m src.db.sqlite_setup
+Database tables are created automatically on the bot's first startup.
 
 Build the container using this command:
 
@@ -40,13 +33,13 @@ Build the container using this command:
 
 ## Configuration
 
-In the [config file](./config/config.yaml) the theme for the bot can be set and modules can be turned on or off (true is on/false is off). After changing any values the container needs to be rebuilt (see [Setup/installation](#setupinstallation)).
+In the [config file](./config/config.yaml) the active theme can be set and modules can be turned on or off (`true` is on, `false` is off). A theme bundles the command prefix, the bot's status message, and module-specific text such as countdown messages (see the `themes` section of the config for the available options). After changing any values the container needs to be rebuilt (see [Setup/installation](#setupinstallation)).
 
 ## Usage/examples
 
 Runs the container built in [Setup/installation](#setupinstallation)
 
-```
+```bash
 docker run -d \
   --name dc-bot \
   --restart unless-stopped \
@@ -54,7 +47,7 @@ docker run -d \
   discord-bot
 ```
 
-<!-- ## Validation/testing -->
+Once running, use the active theme's prefix (`b!` by default) to talk to the bot, e.g. `b!help` to list available commands.
 
 ## Troubleshooting
 

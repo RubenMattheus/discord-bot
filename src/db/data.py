@@ -1,10 +1,14 @@
+import logging
 from .connection import Connection
 
+logger = logging.getLogger(__name__)
+
+
 class Data:
-    """ Data class that acts as layer between connection and repository """
+    """Data class that acts as layer between connection and repository"""
+
     def __init__(self):
         self.conn = Connection.get_connection()
-        self.cursor = self.conn.get_cursor()
 
     def _execute_query(self, query, data=None, fetch_one=False):
         cursor = self.conn.get_cursor()
@@ -17,7 +21,7 @@ class Data:
                 return cursor.fetchone() if fetch_one else cursor.fetchall()
             self.conn.commit()
         except Exception as e:
-            print(f"Database error with query {query}: {e}")
+            logger.error("Database error with query %s: %s", query, e)
         finally:
             cursor.close()
 

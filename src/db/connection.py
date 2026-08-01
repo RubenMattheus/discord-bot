@@ -19,19 +19,15 @@ class Connection:
         return cls._instance
 
     def get_db(self):
-        """ Returns the database instance """
         return self.mydb
 
     def get_cursor(self):
-        """ Returns the database cursor """
         return self.mydb.cursor()
 
     def commit(self):
-        """ Commits to the database """
         self.mydb.commit()
 
     def close_connection(self):
-        """ Close connection to database """
         if self.mydb:
             self.mydb.close()
             Connection._instance = None
